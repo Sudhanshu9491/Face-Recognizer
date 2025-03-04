@@ -14,7 +14,7 @@ print(people)
 face_recognizer=cv.face.LBPHFaceRecognizer_create()
 face_recognizer.read('face_trained.yml')
 
-img=cv.imread(r"C:\Users\sudha\OneDrive\Documents\Coding In Vs Code\Opencv\1Face Recognizer\Images\zen\2.jpg")
+img=cv.imread(r"C:\Users\sudha\OneDrive\Documents\Coding In Vs Code\Opencv\1Face Recognizer\Images\pen\9.jpg")
 gray=cv.cvtColor(img,cv.COLOR_BGR2GRAY)
 
 
@@ -31,4 +31,4 @@ for (x,y,w,h) in face_rect:
 
 cv.imshow('Detected Face', img)
 
-cv.waitKe
+cv.waitKey(0)
