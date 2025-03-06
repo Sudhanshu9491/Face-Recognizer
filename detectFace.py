@@ -2,45 +2,50 @@ import os
 import cv2 as cv
 import numpy as np
 
+# Load Haar Cascade
+detector = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Define dataset directory
 DIR = r"C:\Users\sudha\OneDrive\Documents\Coding In Vs Code\Opencv\1Face Recognizer\Images"
-haar_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
+people = [p for p in os.listdir(DIR) if os.path.isdir(os.path.join(DIR, p))]
+print("People:", people)
 
-people = []
-
-for i in os.listdir(DIR):
-    people.append(i)
-print(people)
-
-faceOfPerson=[]
-nameOfPerson=[]
+# Initialize training data
+faceOfPerson, nameOfPerson = [], []
 
 def create_train():
-    for p in people:
-        path=os.path.join(DIR,p)
-        name=people.index(p)
-
-        for img in os.listdir(path):
-            img_path=os.path.join(path,img)
-            img_array=cv.imread(img_path)
-            gray=cv.cvtColor(img_array,cv.COLOR_BGR2GRAY)
-            face_rect=haar_cascade.detectMultiScale(gray,scaleFactor=1.1,minNeighbors=5 )
-            for (x,y,w,h) in face_rect:
-                face_roi=gray[y:y+h,x:x+w]
+    for person in people:
+        path = os.path.join(DIR, person)
+        label = people.index(person)
+        
+        for img_name in os.listdir(path):
+            img_path = os.path.join(path, img_name)
+            img = cv.imread(img_path)
+            if img is None:
+                continue
+            gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            faces = detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+            
+            for (x, y, w, h) in faces:
+                face_roi = gray[y:y+h, x:x+w]
+                face_roi = cv.resize(face_roi, (100, 100))  # Ensure uniform size
                 faceOfPerson.append(face_roi)
-                nameOfPerson.append(name)
-
+                nameOfPerson.append(label)
+                
 create_train()
-# print(f'Length of faceOfPerson = {len(faceOfPerson)}')
-# print(f'Length of nameOfPerson = {len(nameOfPerson)}')
 
-print("--------------Training Done--------------")
+if len(faceOfPerson) == 0:
+    print("Error: No faces found for training!")
+    exit()
 
-faceOfPerson=np.array(faceOfPerson,dtype='object')
-nameOfPerson=np.array(nameOfPerson)
+print("Training on", len(faceOfPerson), "faces")
+faceOfPerson = np.array(faceOfPerson, dtype='object')
+nameOfPerson = np.array(nameOfPerson, dtype=np.int32)
 
-face_recognizer=cv.face.LBPHFaceRecognizer_create()
-
-face_recognizer.train(faceOfPerson,nameOfPerson)
-face_recognizer.save('face_trained.yml')
-np.save('faceOfPerson.npy',faceOfPerson)
-np.save('nameOfPerson.npy',nameOfPerson)
+# Train face recognizer
+recognizer = cv.face.LBPHFaceRecognizer_create()
+recognizer.train(faceOfPerson, nameOfPerson)
+recognizer.save('face_trained.yml')
+np.save('faceOfPerson.npy', faceOfPerson)
+np.save('nameOfPerson.npy', nameOfPerson)
+print("Training Completed!")
